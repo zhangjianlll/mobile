@@ -17,7 +17,9 @@ import {
 } from 'vee-validate'
 import * as rules from 'vee-validate/dist/rules'// 加载所有的验证规则
 import zhCN from 'vee-validate/dist/locale/zh_CN'
+import { relativeTime } from './utils/date'
 
+// 按需加载vant组件
 // loop over all rules
 import {
   Button,
@@ -31,8 +33,19 @@ import {
   Tab,
   Tabs,
   List,
-  PullRefresh
+  PullRefresh,
+  Grid,
+  GridItem,
+  Image,
+  Lazyload,
+  Popup,
+  Icon
+
 } from 'vant'
+
+// 为了方便能在模板中使用relativeTime方法
+// 所以在这里将其注册为全局过滤器
+Vue.filter('relativeTime', relativeTime)
 Vue
   .use(Button)
   .use(Cell)
@@ -46,6 +59,12 @@ Vue
   .use(Tabs)
   .use(List)
   .use(PullRefresh)
+  .use(Grid)
+  .use(GridItem)
+  .use(Image)
+  .use(Lazyload)
+  .use(Popup)
+  .use(Icon)
 for (let rule in rules) {
   extend(rule, {
     ...rules[rule], // add the rule

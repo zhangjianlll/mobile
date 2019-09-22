@@ -1,7 +1,7 @@
 <template>
   <div class="home">
       <!-- 导航栏 -->
-      <van-nav-bar title="首页" />
+      <van-nav-bar fixed title="首页" />
       <!-- /导航栏 -->
 
       <!-- 频道列表 -->
@@ -12,22 +12,65 @@
           :key="channel.id">
 
           <!-- 标签页的内容：频道的文章列表-->
-          <van-list
+        <van-pull-refresh v-model="channel.pullDownLoading" @refresh="onRefresh">
+            <van-list
             v-model="channel.loading"
             :finished="channel.finished"
             finished-text="没有更多了"
             @load="onLoad"
           >
+          <!-- 具体的内容 -->
             <van-cell
               v-for="article in channel.articles"
               :key="article.art_id.toString()"
               :title="article.title"
-            />
+            >
+                <div slot="label">
+                  <!-- 文章图片 -->
+                  <van-grid :border="false" :column-num="3">
+                    <van-grid-item v-for="(img, index) in article.cover.images" :key="index">
+                      <!-- vant提供的一个显示图片的组件 -->
+                      <van-image height="80" :src="img" Lazy-load />
+                    </van-grid-item>
+                  </van-grid>
+                  <!-- /文章图片 -->
+                  <!-- 文章描述信息 -->
+                  <div class="article-info">
+                    <div class="meta">
+                      <span>{{ article.aut_name }}</span>
+                      <span>{{ article.comm_count }}评论</span>
+                      <!-- 过滤器是函数 使用过滤器就是在调用函数.
+                      前面的会作为参数传递给过滤器函数,过滤器函数的返回值
+                      过滤器函数的返回值将渲染到这里 -->
+                      <span>{{ article.pubdate | relativeTime }}</span>
+                    </div>
+                  </div>
+                  <!-- /文章描述信息 -->
+                </div>
+            </van-cell>
+            <!-- /具体的内容 -->
           </van-list>
+        </van-pull-refresh>
           <!-- 标签页的内容 -->
         </van-tab>
+        <!-- 面包按钮 -->
+        <div slot="nav-right" class="wap-nav" @click="isChannelEditShow=true">
+          <van-icon name="wap-nav" size="24" />
+        </div>
+        <!-- /面包按钮 -->
       </van-tabs>
       <!-- /频道列表 -->
+
+      <!-- 编辑频道 -->
+      <van-popup
+        v-model="isChannelEditShow"
+        position="bottom"
+        :style="{ height: '95%' }"
+        closeable
+        close-icon-position="top-left"
+        round
+      />
+      <!-- /编辑频道 -->
   </div>
 </template>
 
@@ -38,11 +81,9 @@ export default {
   name: 'HomeIndex',
   data () {
     return {
-      active: 2, // 控制当前激活的标签页
+      active: 0, // 控制当前激活的标签页
       channels: [], // 频道列表
-      list: [],
-      loading: false,
-      finished: false
+      isChannelEditShow: false
     }
   },
   computed: {
@@ -64,9 +105,12 @@ export default {
         channel.loading = false// 频道的上拉加载更多的loading状态
         channel.finished = false// 频道的加载结束状态
         channel.timestamp = null// 用于获取下一页数据的时间戳(页码)
+        channel.pullDownLoading = false // 频道的下拉刷新loading状态
       })
       this.channels = data.data.channels // 将获取到的频道列表赋给data中的数据
     },
+
+    // 上拉加载更多处理函数
     async onLoad () {
       // 1、请求加载文章列表
       const currentChannel = this.currentChannel
@@ -91,6 +135,25 @@ export default {
         // 还有数据。将本次得到的preTimestamp存储到当前频道，用于加载下一页数据
         currentChannel.timestamp = preTimestamp
       }
+    },
+
+    // 下拉刷新处理函数
+    async onRefresh () {
+      // 1 请求获取文章列表
+      const currentChannel = this.currentChannel
+      const { data } = await getArticles({
+        channelId: currentChannel.id,
+        timestamp: Date.now(),
+        withTop: 1
+      })
+      console.log(data)
+      // 2 将请求到的数据添加到articles数据中(添加到顶部)
+      currentChannel.articles.unshift(...data.data.results)
+      // 3 关闭当前频道下拉刷新的loading状态
+      currentChannel.pullDownLoading = false
+
+      // 4.提示用户刷新成功
+      this.$toast('刷新成功')
     }
 
     // onLoad () {
@@ -125,7 +188,30 @@ export default {
    .van-tabs {
      .van-tabs__content {
        margin-bottom: 50px;
+       margin-top: 90px;
+     }
+     .van-tabs__wrap{
+       position: fixed;
+       top: 46px;
+       z-index: 2;
+       left: 0;
+       right: 0;
      }
    }
+      .wap-nav {
+      position: sticky;
+      right: 0;
+      display: flex;
+      align-items: center;
+      background-color: #fff;
+      opacity: 0.8;
+    }
+ }
+
+ .article-info{
+   .meta span {
+     margin-right: 10px;
+   }
+
  }
 </style>
