@@ -54,44 +54,53 @@
 </template>
 
 <script>
-import {login} from '@/api/user'
+import { login } from '@/api/user'
+import request from '@/utils/request'
 export default {
-  name:'loginIndex',
-  data(){
+  name: 'loginIndex',
+  data () {
     return {
-      user:{
-        mobile:'',
-        code:''
+      user: {
+        mobile: '',
+        code: ''
       },
-      isloginloading:false //控制登录按钮的loading状态
+      isloginloading: false // 控制登录按钮的loading状态
     }
   },
+  created () {
+    request({
+      method: 'GET',
+      url: '/app/v1_0/channels'
+    }).then(res => {
+      console.log(res.data)
+    })
+  },
   methods: {
-   async onlogin () {
-    //  获取表单数据
-    //  发送请求
-    try{
+    async onlogin () {
+    // 获取表单数据
+    // 发送请求
+      try {
       // 表单验证
-     const isValid = await this.$refs.loginForm.validate()
-      // 如果验证失败则什么都不做
-      if(!isValid){
-        return 
-      }
+        const isValid = await this.$refs.loginForm.validate()
+        // 如果验证失败则什么都不做
+        if (!isValid) {
+          return
+        }
 
-      //验证通过提交表单
-      this.isloginloading=true
-      const{data} = await login(this.user)
-
-    // 成功后将数据打印出来
-      console.log(data)
-      this.$toast.success('牛逼克拉斯！')
-    }catch(err){
-      if(err.response&&err.response.status===400){
-        this.$toast.fail('失败,手机号或验证码错误！')
+        // 验证通过提交表单
+        this.isloginloading = true
+        const res = await login(this.user)
+        console.log(res)
+        // 成功后将数据打印出来
+        this.$store.commit('setUser', res.data.data)
+        this.$toast.success('登陆成功！')
+      } catch (err) {
+        if (err.response && err.response.status === 400) {
+          this.$toast.fail('失败,手机号或验证码错误！')
+        }
       }
-    }
-    //无论登录成功与否，都要让loading效果停止
-      this.isloginloading=false
+      // 无论登录成功与否，都要让loading效果停止
+      this.isloginloading = false
     }
   }
 }

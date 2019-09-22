@@ -25,7 +25,9 @@ import {
   CellGroup,
   NavBar,
   Field,
-  Toast
+  Toast,
+  Tabbar,
+  TabbarItem
 } from 'vant'
 Vue
   .use(Button)
@@ -34,6 +36,8 @@ Vue
   .use(NavBar)
   .use(Field)
   .use(Toast)
+  .use(Tabbar)
+  .use(TabbarItem)
 
 for (let rule in rules) {
   extend(rule, {
